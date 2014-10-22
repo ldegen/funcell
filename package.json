@@ -1,7 +1,7 @@
 {
   "name": "funcell",
   "version": "0.1.0",
-  "description": "adventures in frp",
+  "description": "adventures in reactive programming",
   "main": "./lib/cell.js",
   "scripts": {
     "test": "jasmine-node --coffee .",
