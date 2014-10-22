@@ -1,0 +1,30 @@
+{
+  "name": "funcell",
+  "version": "0.1.0",
+  "description": "adventures in frp",
+  "main": "./lib/cell.js",
+  "scripts": {
+    "test": "jasmine-node --coffee .",
+    "prepublish": "coffee --compile --output lib src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ldegen/funcell.git"
+  },
+  "keywords": [
+    "frp",
+    "cell"
+  ],
+  "author": "Lukas Degener <l.degener@tarent.de>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ldegen/funcell/issues"
+  },
+  "devDependencies": {
+    "jasmine-node": "*",
+    "coffee-script": "*"
+  },
+  "dependencies": {
+  },
+  "homepage": "https://github.com/ldegen/funcell"
+}
