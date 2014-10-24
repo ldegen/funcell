@@ -1,8 +1,30 @@
 describe "A Cell", ->
   Cell = require "../src/cell"
-  it "holds an expression which is evaluated on demand", ->
+  Formula = require "../src/formula"
+  it "can be evaluated just as any other function", ->
     c = Cell -> 42
     expect(c()).toBe 42
+
+  it "can not contain formulas with free variables",->
+    expect( -> Cell (a,b)->a+b ).toThrow new Error("Formulas in Cells must not contain free variables")
+
+
+  it "can be referenced from within a formula", ->
+    c = Cell -> 42
+    f = Formula -> 2+@ref(c)/2
+
+    expect(f()).toBe 23
+
+  it "can be referenced from a formula in a different scope",->
+    a =
+      cell:Cell -> @val
+      val:42
+    b =
+      formula: Formula -> @val+@from(a).cell()/@val
+      val:2
+
+    expect(b.formula()).toBe 23
+
 
   it "does not evaluate the same expression twice",->
     expr = createSpy "expr"
@@ -22,8 +44,8 @@ describe "A Cell", ->
     c = Cell -> 42
     l1 = createSpy "l1"
     l2 = createSpy "l2"
-    expect(c(l1)).toBe 42
-    expect(c(l2)).toBe 42
+    expect(c.call({__funcell__:{invalidate:l1}})).toBe 42
+    expect(c.call({__funcell__:{invalidate:l2}})).toBe 42
     expect(l1).not.toHaveBeenCalled()
     expect(l2).not.toHaveBeenCalled()
     c.set -> 23
@@ -33,19 +55,35 @@ describe "A Cell", ->
   it "drops callbacks once having called them",->
     c = Cell -> 42
     l = createSpy "l"
-    expect(c(l)).toBe 42
+    expect(c.call({__funcell__:{invalidate:l}})).toBe 42
     c.set -> 23
     c.set -> 24
     expect(l.calls.length).toBe(1)
 
-  it "allows expressions to reference another cell",->
-    a = Cell -> 42
-    b = Cell (ref)-> 2+ref(a)/2
-    expect(b()).toBe(23)
 
   it "automatically watches referenced cells and invalidates the own value if they change",->
     a = Cell -> 42
-    b = Cell (ref)-> 2+ref(a)/2
+    b = Cell -> 2+@ref(a)/2
     expect(b()).toBe(23)
     a.set -> 6
     expect(b()).toBe(5)
+  
+  it "change propagation works with indirectly referenced cells",->
+    a = Cell -> 42
+    b = Formula -> 2+@ref(a)/2
+    c = Cell -> @ref(b)+2
+    expect(c()).toBe(25)
+    a.set -> 6
+    expect(c()).toBe(7)
+  
+  it "change propagation works with cells and formulas living in different scopes",->
+    a =
+      cell: Cell -> @self.val()
+      val: Cell -> 42
+    b =
+      formula: Formula (divisor)-> @self.val()+@from(a).cell()/divisor
+      val: Cell -> 2
+    c = Cell -> @from(b).formula(2)+2
+    expect(c()).toBe(25)
+    a.val.set -> 6
+    expect(c()).toBe(7)

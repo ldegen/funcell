@@ -1,8 +1,16 @@
-module.exports = (expr)->
+module.exports = (expr0)->
+  Formula = require("./formula")
   dirty=true
   value = undefined
-  expr ?= ()->undefined
+  expr =()->undefined
   callbacks = []
+
+  create = (->
+    F =  ->
+    (proto)->
+      F.prototype = proto
+      new F()
+  )()
 
   invalidate = ->
     dirty=true
@@ -12,21 +20,26 @@ module.exports = (expr)->
     callbacks = []
 
   set = (newExpr)->
-    expr=newExpr
+    if newExpr.length > 0
+      throw new Error("Formulas in Cells must not contain free variables")
+    expr=Formula(newExpr)
     invalidate()
 
-  ref = (other)->
-    other(invalidate)
+  set expr0 if expr0
 
-  cell = (cb)->
-    if cb?
-      callbacks.push cb
+  cell = ()->
+    self=this
+    funcell = this.__funcell__
+    if funcell?.invalidate?
+      callbacks.push funcell.invalidate
     if dirty
       dirty=false
-      value=expr(ref)
+      cx = create self
+      cx.__funcell__ =
+        invalidate: invalidate
+      value=expr.call(cx)
     else
       value
-  
   cell.invalidate = invalidate
   cell.set = set
 
