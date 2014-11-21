@@ -40,7 +40,7 @@ describe "A Cell", ->
     c.set -> 23
     expect(c()).toBe 23
 
-  it "can be given a callback that is to be executed when the cell value changes",->
+  it "can be passed a callback that is to be executed when the cell value changes",->
     c = Cell -> 42
     l1 = createSpy "l1"
     l2 = createSpy "l2"
@@ -87,3 +87,19 @@ describe "A Cell", ->
     expect(c()).toBe(25)
     a.val.set -> 6
     expect(c()).toBe(7)
+
+  it "can call a callback whenever its value changes",->
+    a= Cell -> 42
+    b= Cell -> 2*@ref(a)
+    a.debug("a")
+    b.debug("b")
+    listener = createSpy("listener")
+    console.log "before"
+    b.changed listener
+    a.set -> 6*7
+    console.log "after"
+    expect(listener).not.toHaveBeenCalled()
+    a.set -> 21
+    expect(listener).toHaveBeenCalledWith(b,84)
+
+
