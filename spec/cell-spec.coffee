@@ -84,6 +84,7 @@ describe "A Cell", ->
       formula: Formula (divisor)-> @self.val()+@from(a).cell()/divisor
       val: Cell -> 2
     c = Cell -> @from(b).formula(2)+2
+
     expect(c()).toBe(25)
     a.val.set -> 6
     expect(c()).toBe(7)
@@ -91,15 +92,14 @@ describe "A Cell", ->
   it "can call a callback whenever its value changes",->
     a= Cell -> 42
     b= Cell -> 2*@ref(a)
-    a.debug("a")
-    b.debug("b")
     listener = createSpy("listener")
-    console.log "before"
     b.changed listener
     a.set -> 6*7
-    console.log "after"
     expect(listener).not.toHaveBeenCalled()
     a.set -> 21
     expect(listener).toHaveBeenCalledWith(b,84)
 
 
+  it "can be initialized with a constant", ->
+    a = Cell 42
+    expect(a()).toBe 42

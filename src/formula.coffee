@@ -26,4 +26,7 @@ module.exports = (body,props)->
     cx.self = cx
     body.apply(cx,arguments)
 
-  expr
+  constExpr = () -> body
+
+  if typeof body == "function" then expr else constExpr
+

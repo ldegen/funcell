@@ -1,6 +1,7 @@
 module.exports = (expr0)->
   Formula = require("./formula")
   dirty=true
+  constant = false
   value = undefined
   expr =()->undefined
   debug=false
@@ -19,6 +20,7 @@ module.exports = (expr0)->
     obj=
       name: cellName
       value: value
+      constant: constant
       dirty: dirty
       callbacks: callbacks.map (f)->f.callingCell
       listeners: listeners.length
@@ -49,10 +51,16 @@ module.exports = (expr0)->
         listeners[j](cell,oldVal)
 
   set = (newExpr)->
-    if newExpr.length > 0
-      throw new Error("Formulas in Cells must not contain free variables")
-    expr=Formula(newExpr)
-    debugMsg "reset"
+    if typeof newExpr == "function"
+      constant = false
+      if newExpr.length > 0
+        throw new Error("Formulas in Cells must not contain free variables")
+      expr=Formula(newExpr)
+      debugMsg "reset (formula)"
+    else
+      expr = newExpr
+      constant = true
+      debugMsg "reset (constant)"
     invalidate()
 
   set expr0 if expr0
@@ -60,19 +68,23 @@ module.exports = (expr0)->
   cell = ()->
     self=this
     funcell = this.__funcell__
-    if funcell?.invalidate?
+    if funcell?.invalidate? and callbacks.indexOf(funcell.invalidate) == -1
       callbacks.push funcell.invalidate
       debugMsg "registered callback #{funcell.invalidate.callingCell}"
     if dirty
       debugMsg "BEGIN evaluate"
       dirty=false
-      cx = create self
-      invalidate.callingCell = cellName if debug
-      cx.__funcell__ =
-        invalidate: invalidate
-      value=expr.call(cx)
-      debugMsg "END evaluate"
-      value
+      if constant
+        debugMsg "END evaluate (const)"
+        value=expr
+      else
+        cx = create self
+        invalidate.callingCell = cellName if debug
+        cx.__funcell__ =
+          invalidate: invalidate
+        value=expr.call(cx)
+        debugMsg "END evaluate"
+        value
     else
       value
   cell.invalidate = invalidate

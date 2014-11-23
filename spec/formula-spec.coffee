@@ -67,3 +67,7 @@ describe "A Formula", ->
     expect(cx.sum).toBe cell
     expect(cx.exp).toBe cell
 
+  it "may be initialized with a constant instead of a function",->
+    f=Formula(42)
+    expect(f()).toBe(42)
+
