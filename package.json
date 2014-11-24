@@ -1,6 +1,6 @@
 {
   "name": "funcell",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "adventures in reactive programming",
   "main": "./lib/index.js",
   "scripts": {
