@@ -5,10 +5,11 @@ describe "The (2nd Generation)-Cell", ->
     c = Cell -> 42
     expect(c()).toBe 42
 
-  it "will bind this to the cell itself by default ", ->
+  it "will not bind this by default ", ->
     c = Cell -> this
     o = {}
-    expect(c.call(o)).toBe c #... and not o!
+    global = (()->this)()
+    expect(c()).toBe global
 
   it "can optionaly bind this to custom object given to the constructor", ->
     o = {a:21}
@@ -47,7 +48,7 @@ describe "The (2nd Generation)-Cell", ->
     a.set 32
     expect(c()).toBe(64)
 
-  it "informs registered listeners when its value actually changes", ->
+  it "informs registered listeners when its value might have changed", ->
     a= Cell 42
     b= Cell -> 2*a()
     a.debug "a"
@@ -56,7 +57,7 @@ describe "The (2nd Generation)-Cell", ->
     expect(b()).toBe 84
     b.addListener listener
     a.set -> 6*7
-    expect(listener).not.toHaveBeenCalled()
+    expect(listener).toHaveBeenCalledWith(b,84)
     a.set -> 21
     expect(listener).toHaveBeenCalledWith(b,84)
     

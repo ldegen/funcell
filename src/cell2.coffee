@@ -49,21 +49,27 @@ module.exports = ( ()->
         debugMsg -> "propagate #{copy[i].cellName()}"
         copy[i].invalidate()
       j = listeners.length
-      if j>0 && getValue() != oldValue
+      if j>0 #&& getValue() != oldValue
         while j--
           listeners[j](cell,oldValue)
 
-    set = (v)->
-      if v != cachedValue
-        if typeof v == "function"
-          if v.length > 0
-            throw new Error("Formulas in Cells must not contain free variables")
-          constant = undefined
-          formula = v.bind self
-        else
-          formula = undefined
-          constant = v
+    setF = (v)->
+     # if v != cachedValue
+        if v.length > 0
+          throw new Error("Formulas in Cells must not contain free variables")
+        constant = undefined
+        formula = if self? then v.bind self else v
         invalidate()
+    setC = (v)->
+      # if v != cachedValue
+        formula = undefined
+        constant = v
+        invalidate()
+    set = (v)->
+      if typeof v == "function"
+        setF v
+      else
+        setC v
 
 
     cell = ()->
@@ -99,6 +105,8 @@ module.exports = ( ()->
 
 
     cell.set = set
+    cell.setF = setF
+    cell.setC = setC
     cell.invalidate = invalidate
     cell.addListener = addListener
     cell.debug = (name)->
@@ -110,7 +118,7 @@ module.exports = ( ()->
     
     if arguments.length==1
       body=self
-      self=cell
+      self=undefined
 
     set body
 
