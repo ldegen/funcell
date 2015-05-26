@@ -1,5 +1,6 @@
 module.exports = ( ()->
   stack = []
+  _cid = 0
   _push_stack = stack.push.bind stack
   _pop_stack = stack.pop.bind stack
   _peek_stack = ()->
@@ -11,22 +12,24 @@ module.exports = ( ()->
   _paddingLength = 30
 
   (self,body)->
+    cid = _cid = _cid + 1
     formula = undefined
     constant = undefined
     cachedValue = undefined
     dirty = true
-    dependentCells = []
+    dependentCells = {}
     listeners = []
     debug = false
     cellName = undefined
 
     info = ->
       obj=
+        cid: cid
         name: cellName
         value: cachedValue
         constant: constant?
         dirty: dirty
-        dependent: dependentCells.map (f)->f.cellName()
+        dependent: Object.keys(dependentCells)
         listeners: listeners.length
       JSON.stringify obj
 
@@ -42,12 +45,13 @@ module.exports = ( ()->
       debugMsg "invalidate"
       dirty=true
       oldValue = cachedValue
-      i = dependentCells.length
-      copy = dependentCells.concat()
-      dependentCells=[]
-      while i--
-        debugMsg -> "propagate #{copy[i].cellName()}"
-        copy[i].invalidate()
+      copy={}
+      for key, val of dependentCells
+        copy[key]=val
+      dependentCells={}
+      for key, val of copy
+        debugMsg -> "propagate #{val.cellName()}"
+        val.invalidate()
       j = listeners.length
       if j>0 #&& getValue() != oldValue
         while j--
@@ -75,9 +79,9 @@ module.exports = ( ()->
     cell = ()->
       debugMsg "requested"
       caller = _peek_stack()
-      if caller && dependentCells.indexOf(caller)==-1
+      if caller && not dependentCells[caller.cid]?
         debugMsg -> "push caller #{caller.cellName()}"
-        dependentCells.push caller
+        dependentCells[caller.cid] = caller
       getValue()
       
     getValue = ()->
@@ -102,8 +106,8 @@ module.exports = ( ()->
     addListener = (l)->
       debugMsg "register listener"
       listeners.push(l)
-
-
+    
+    cell.cid = cid
     cell.set = set
     cell.setF = setF
     cell.setC = setC
