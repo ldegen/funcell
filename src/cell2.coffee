@@ -11,7 +11,7 @@ module.exports = ( ()->
 
   _paddingLength = 30
 
-  (self,body)->
+  (self0,body0)->
     cid = _cid = _cid + 1
     formula = undefined
     constant = undefined
@@ -41,17 +41,18 @@ module.exports = ( ()->
       padding = Array(_paddingLength-msg.length).join(" ")
       console.log msg,padding,info()
 
+    _values = (obj)-> (val for key,val of obj)
+
+    _invalidateAll = (cells)->
+      cell.invalidate() for cell in cells
+
     invalidate = ()->
-      debugMsg "invalidate"
+      # debugMsg "invalidate"
       dirty=true
       oldValue = cachedValue
-      copy={}
-      for key, val of dependentCells
-        copy[key]=val
+      copy=_values(dependentCells)
       dependentCells={}
-      for key, val of copy
-        debugMsg -> "propagate #{val.cellName()}"
-        val.invalidate()
+      _invalidateAll(copy)
       j = listeners.length
       if j>0 #&& getValue() != oldValue
         while j--
@@ -77,13 +78,13 @@ module.exports = ( ()->
 
 
     cell = ()->
-      debugMsg "requested"
+      ## debugMsg "requested"
       caller = _peek_stack()
       if caller && not dependentCells[caller.cid]?
-        debugMsg -> "push caller #{caller.cellName()}"
+        # debugMsg -> "push caller #{caller.cellName()}"
         dependentCells[caller.cid] = caller
       getValue()
-      
+
     getValue = ()->
       if dirty
         dirty = false
@@ -92,21 +93,21 @@ module.exports = ( ()->
 
     evaluate = ()->
       if formula?
-        debugMsg "BEGIN evaluate (formula)"
+        # debugMsg "BEGIN evaluate (formula)"
         _push_stack cell
         result = formula()
         _pop_stack()
-        debugMsg "END evaluate (formula)"
+        # debugMsg "END evaluate (formula)"
         result
       else
-        debugMsg "evaluate (constant)"
+        # debugMsg "evaluate (constant)"
         constant
 
 
     addListener = (l)->
-      debugMsg "register listener"
+      # debugMsg "register listener"
       listeners.push(l)
-    
+
     cell.cid = cid
     cell.set = set
     cell.setF = setF
@@ -116,13 +117,16 @@ module.exports = ( ()->
     cell.debug = (name)->
       cellName=name
       debug=true
-      debugMsg "debug on"
+      # debugMsg "debug on"
 
     cell.cellName = ()->cellName
-    
-    if arguments.length==1
-      body=self
+
+    if arguments.length == 1
+      body=self0
       self=undefined
+    else if arguments.length == 2
+      body = body0
+      self = self0
 
     set body
 
