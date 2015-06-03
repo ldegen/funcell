@@ -35,9 +35,15 @@ _info = (()->
 
 _paddingLength = 30
 _values = (obj)-> (val for key,val of obj)
+##_debug = (cellInfo)->
+  #if(cellInfo.cellName?)
+  #  args = Array.prototype.slice.call(arguments)
+  #  args[0] = "#{cellInfo.cellName ? 'anon'}(#{cellInfo.cid})"
+  #  console.log.apply console,args
 
 _invalidate = (cellInfo)->
   return if not cellInfo
+  #_debug(cellInfo,"_invalidate")
   cellInfo.dirty=true
   oldValue = cellInfo.cachedValue
   copy=Object.keys cellInfo.dependentCellInfos
@@ -62,10 +68,12 @@ Cell=(self0,body0)->
   setF = (v)->
     if v.length > 0
       throw new Error("Formulas in Cells must not contain free variables")
+    #_debug(cellInfo,"setF",v)
     constant = undefined
     formula = if self? then v.bind self else v
     _invalidate(cellInfo)
   setC = (v)->
+    #_debug(cellInfo,"setC",v)
     formula = undefined
     constant = v
     _invalidate(cellInfo)
@@ -87,10 +95,12 @@ Cell=(self0,body0)->
 
   cell = ()->
     callerId = _peek_stack()
+    #_debug cellInfo, "req",callerId
     _insertCaller cellInfo.dependentCellInfos, callerId
     getValue()
 
   evaluate = ()->
+    #_debug cellInfo, "eval"
     if formula?
       _push_stack cid
       result = formula()
