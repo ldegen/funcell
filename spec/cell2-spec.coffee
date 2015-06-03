@@ -44,6 +44,9 @@ describe "The (2nd Generation)-Cell", ->
     a = Cell 21
     b = (x) -> 2*x
     c = Cell -> b(a())
+    a.debug 'a'
+    #b.debug 'b'
+    c.debug 'c'
     expect(c()).toBe(42)
     a.set 32
     expect(c()).toBe(64)
@@ -57,7 +60,7 @@ describe "The (2nd Generation)-Cell", ->
     expect(b()).toBe 84
     b.addListener listener
     a.set -> 6*7
-    expect(listener).toHaveBeenCalledWith(b,84)
+    expect(listener).toHaveBeenCalledWith(b.info,84)
     a.set -> 21
-    expect(listener).toHaveBeenCalledWith(b,84)
+    expect(listener).toHaveBeenCalledWith(b.info,84)
     
